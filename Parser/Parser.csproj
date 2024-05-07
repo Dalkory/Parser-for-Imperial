@@ -13,4 +13,10 @@
     <PackageReference Include="MongoDB.Driver.Core" Version="2.25.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="OMNI-mLog.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -34,7 +34,7 @@ namespace SensorDataParserTests
             _mockRepository.Verify(repo => repo.InsertSensorData(It.IsAny<IEnumerable<SensorData>>()), Times.Once());
         }
 
-        [TestMethod] // Этот тест убеждается, что метод ParseAndStoreData правильно обрабатывает строки с пустыми значениями полей.
+        [TestMethod] // Этот тест проверяет, что метод ParseAndStoreData правильно обрабатывает строки с пустыми значениями полей.
         public void ParseAndStoreData_ShouldHandleEmptyValues()
         {
             // Arrange

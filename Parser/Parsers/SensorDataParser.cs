@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 
 public class SensorDataParser
 {
@@ -11,51 +11,66 @@ public class SensorDataParser
 
     public void ParseAndStoreData(string filePath)
     {
-        var sensorData = ParseFile(filePath);
-        _repository.InsertSensorData(sensorData);
+        try
+        {
+            var sensorData = ParseFile(filePath).ToList();
+            if (sensorData.Any())
+            {
+                _repository.InsertSensorData(sensorData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while parsing and storing sensor data: {ex.Message}");
+            throw;
+        }
     }
 
     private IEnumerable<SensorData> ParseFile(string filePath)
     {
-        var lines = File.ReadAllLines(filePath);
-        var sensorNames = new List<string>();
-
-        foreach (var line in lines)
+        using (var reader = new StreamReader(filePath))
         {
-            if (line.StartsWith("Date Time"))
+            string line;
+            var headerProcessed = false;
+            while ((line = reader.ReadLine()) != null)
             {
-                sensorNames = ParseHeader(line);
-                continue;
-            }
-
-            foreach (var sensorData in ParseLine(line, sensorNames))
-            {
-                yield return sensorData;
-            }
-        }
-    }
-
-    private List<string> ParseHeader(string headerLine)
-    {
-        return headerLine.Split(',').Skip(1).Select(name => name.Trim()).ToList();
-    }
-
-    private IEnumerable<SensorData> ParseLine(string line, List<string> sensorNames)
-    {
-        var dataParts = line.Split(',').Select(p => p.Trim()).ToArray();
-        var measurementTime = DateTime.ParseExact(dataParts[0], "yyyy\\\\MM\\\\dd HH:mm:ss", CultureInfo.InvariantCulture);
-
-        for (int i = 1; i < dataParts.Length; i++)
-        {
-            if (double.TryParse(dataParts[i], NumberStyles.Any, CultureInfo.InvariantCulture, out double measurementValue))
-            {
-                yield return new SensorData
+                if (line.StartsWith("DateTime") && !headerProcessed)
                 {
-                    SensorId = sensorNames[i - 1],
-                    MeasurementTime = measurementTime,
-                    MeasurementValue = measurementValue
-                };
+                    headerProcessed = true;
+                    continue;
+                }
+
+                var sensorData = ParseLine(line);
+                if (sensorData != null)
+                {
+                    yield return sensorData;
+                }
             }
         }
+    }
+
+    private SensorData ParseLine(string line)
+    {
+        var dataParts = line.Split(';').Select(p => p.Trim()).ToArray();
+
+        if (dataParts.Length < 12)
+            return null;
+
+        if (!DateTime.TryParseExact(dataParts[0], "dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var measurementTime))
+            return null;
+
+        var sensorName = dataParts[1];
+        if (!double.TryParse(dataParts[10], NumberStyles.Any, CultureInfo.InvariantCulture, out double value1))
+            return null;
+        if (!double.TryParse(dataParts[11], NumberStyles.Any, CultureInfo.InvariantCulture, out double value2))
+            return null;
+
+        return new SensorData
+        {
+            SensorName = sensorName,
+            MeasurementTime = measurementTime,
+            Value1 = value1,
+            Value2 = value2
+        };
     }
 }

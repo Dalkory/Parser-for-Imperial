@@ -15,86 +15,148 @@ namespace SensorDataParserTests
             _parser = new SensorDataParser(_mockRepository.Object);
         }
 
-        [TestMethod] // Этот тест проверяет, что метод ParseAndStoreData корректно обрабатывает и сохраняет все строки данных.
+        [TestMethod] // РџСЂРѕРІРµСЂСЏРµС‚ РєРѕСЂСЂРµРєС‚РЅРѕ Р»Рё ParseAndStoreData РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ Рё СЃРѕС…СЂР°РЅСЏРµС‚ РІСЃРµ СЃС‚СЂРѕРєРё РґР°РЅРЅС‹С….
         public void ParseAndStoreData_ShouldParseAllLines()
         {
             // Arrange
             var testData = new List<string>
             {
-                "Date Time,Battery[V],Temperature,Humidity",
-                "2015\\06\\15 12:39:10,13.3,10.7,63",
-                "2015\\06\\15 15:39:10,13.4,17.1,59"
+                "DateTime;SensorName;CustomerName;Flags;SensorType;Unit;East;North;Height;km;VALUE1;VALUE2",
+                "28.06.2022 15:30:31;TurbineMonitoring:DH_HS5_HS2_E2_comp;;;HydrostaticLevel;Hectopascal;0.0000;0.0000;0.0000;0.0000;0.0;15.0",
+                "28.06.2022 15:30:41;TurbineMonitoring:DH_HS5_HS2_E2_comp;;;HydrostaticLevel;Hectopascal;0.0000;0.0000;0.0000;0.0000;0.013879726000002873;15.0",
+                "28.06.2022 15:30:51;TurbineMonitoring:DH_HS5_HS2_E2_comp;;;HydrostaticLevel;Hectopascal;0.0000;0.0000;0.0000;0.0000;0.02181099799998439;15.0"
             };
-            File.WriteAllLines("testData.txt", testData);
+            File.WriteAllLines("testData.csv", testData);
 
             // Act
-            _parser.ParseAndStoreData("testData.txt");
+            _parser.ParseAndStoreData("testData.csv");
 
             // Assert
-            _mockRepository.Verify(repo => repo.InsertSensorData(It.IsAny<IEnumerable<SensorData>>()), Times.Once());
+            _mockRepository.Verify(repo => repo.InsertSensorData(It.Is<IEnumerable<SensorData>>(data => data.Count() == 3)), Times.Once());
         }
 
-        [TestMethod] // Этот тест проверяет, что метод ParseAndStoreData правильно обрабатывает строки с пустыми значениями полей.
+        [TestMethod] // РџСЂРѕРІРµСЂСЏРµС‚ РїСЂР°РІРёР»СЊРЅРѕ Р»Рё ParseAndStoreData РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ СЃС‚СЂРѕРєРё СЃ РїСѓСЃС‚С‹РјРё Р·РЅР°С‡РµРЅРёСЏРјРё РїРѕР»РµР№.
         public void ParseAndStoreData_ShouldHandleEmptyValues()
         {
             // Arrange
             var testData = new List<string>
             {
-                "Date Time,Battery[V],Temperature,Humidity",
-                "2015\\06\\15 12:39:10,13.3,,63"
+                "DateTime;SensorName;CustomerName;Flags;SensorType;Unit;East;North;Height;km;VALUE1;VALUE2",
+                "28.06.2022 15:30:31;TurbineMonitoring:DH_HS5_HS2_E2_comp;;;HydrostaticLevel;Hectopascal;0.0000;0.0000;0.0000;0.0000;;15.0"
             };
-            File.WriteAllLines("testData.txt", testData);
+            File.WriteAllLines("testData.csv", testData);
 
             // Act
-            _parser.ParseAndStoreData("testData.txt");
+            _parser.ParseAndStoreData("testData.csv");
 
             // Assert
-            _mockRepository.Verify(repo => repo.InsertSensorData(It.IsAny<IEnumerable<SensorData>>()), Times.Once());
+            _mockRepository.Verify(repo => repo.InsertSensorData(It.IsAny<IEnumerable<SensorData>>()), Times.Never());
         }
 
-        [TestMethod] // Этот тест проверяет, как метод ParseAndStoreData справляется со строками, содержащими недопустимые данные.
+        [TestMethod] // РџСЂРѕРІРµСЂСЏРµС‚ СЃРїСЂР°РІР»СЏРµС‚СЃСЏ Р»Рё ParseAndStoreData СЃРѕ СЃС‚СЂРѕРєР°РјРё, СЃРѕРґРµСЂР¶Р°С‰РёРјРё РЅРµРґРѕРїСѓСЃС‚РёРјС‹Рµ РґР°РЅРЅС‹Рµ.
         public void ParseAndStoreData_ShouldHandleInvalidData()
         {
             // Arrange
             var testData = new List<string>
             {
-                "Date Time,Battery[V],Temperature,Humidity",
-                "2015\\06\\15 12:39:10,not_a_number,10.7,63"
+                "DateTime;SensorName;CustomerName;Flags;SensorType;Unit;East;North;Height;km;VALUE1;VALUE2",
+                "28.06.2022 15:30:31;TurbineMonitoring:DH_HS5_HS2_E2_comp;;;HydrostaticLevel;Hectopascal;0.0000;0.0000;0.0000;0.0000;not_a_number;15.0"
             };
-            File.WriteAllLines("testData.txt", testData);
+            File.WriteAllLines("testData.csv", testData);
 
             // Act
-            _parser.ParseAndStoreData("testData.txt");
+            _parser.ParseAndStoreData("testData.csv");
 
             // Assert
-            _mockRepository.Verify(repo => repo.InsertSensorData(It.IsAny<IEnumerable<SensorData>>()), Times.Once());
+            _mockRepository.Verify(repo => repo.InsertSensorData(It.IsAny<IEnumerable<SensorData>>()), Times.Never());
         }
 
-        [TestMethod] // Этот тест проверяет, что метод ParseAndStoreData правильно обрабатывает случаи с несколькими заголовочными строками.
+        [TestMethod] // РџСЂРѕРІРµСЂСЏРµС‚ РїСЂР°РІРёР»СЊРЅРѕ Р»Рё ParseAndStoreData РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ СЃР»СѓС‡Р°Рё СЃ РЅРµСЃРєРѕР»СЊРєРёРјРё Р·Р°РіРѕР»РѕРІРѕС‡РЅС‹РјРё СЃС‚СЂРѕРєР°РјРё.
         public void ParseAndStoreData_ShouldHandleMultipleHeaderLines()
         {
             // Arrange
             var testData = new List<string>
             {
-                "Date Time,Battery[V],Temperature,Humidity",
-                "Date Time,Battery[V],Temperature,Humidity",
-                "2015\\06\\15 12:39:10,13.3,10.7,63"
+                "DateTime;SensorName;CustomerName;Flags;SensorType;Unit;East;North;Height;km;VALUE1;VALUE2",
+                "DateTime;SensorName;CustomerName;Flags;SensorType;Unit;East;North;Height;km;VALUE1;VALUE2",
+                "28.06.2022 15:30:31;TurbineMonitoring:DH_HS5_HS2_E2_comp;;;HydrostaticLevel;Hectopascal;0.0000;0.0000;0.0000;0.0000;0.0;15.0"
             };
-            File.WriteAllLines("testData.txt", testData);
+            File.WriteAllLines("testData.csv", testData);
 
             // Act
-            _parser.ParseAndStoreData("testData.txt");
+            _parser.ParseAndStoreData("testData.csv");
 
             // Assert
-            _mockRepository.Verify(repo => repo.InsertSensorData(It.IsAny<IEnumerable<SensorData>>()), Times.Once());
+            _mockRepository.Verify(repo => repo.InsertSensorData(It.Is<IEnumerable<SensorData>>(data => data.Count() == 1)), Times.Once());
+        }
+
+        [TestMethod] // РџСЂРѕРІРµСЂСЏРµС‚ РєРѕСЂСЂРµРєС‚РЅРѕ Р»Рё РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ ParseAndStoreData РїСѓСЃС‚РѕР№ С„Р°Р№Р».
+        public void ParseAndStoreData_ShouldHandleEmptyFile()
+        {
+            // Arrange
+            var testData = new List<string>();
+            File.WriteAllLines("testData.csv", testData);
+
+            // Act
+            _parser.ParseAndStoreData("testData.csv");
+
+            // Assert
+            _mockRepository.Verify(repo => repo.InsertSensorData(It.IsAny<IEnumerable<SensorData>>()), Times.Never());
+        }
+
+        [TestMethod] // РџСЂРѕРІРµСЂСЏРµС‚ РїСЂРѕРїСѓСЃРєР°РµС‚ Р»Рё РЅРµРґРѕРїСѓСЃС‚РёРјС‹Рµ СЃС‚СЂРѕРєРё Рё РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ С‚РѕР»СЊРєРѕ РґРѕРїСѓСЃС‚РёРјС‹Рµ СЃС‚СЂРѕРєРё ParseAndStoreData.
+        public void ParseAndStoreData_ShouldSkipInvalidLines()
+        {
+            // Arrange
+            var testData = new List<string>
+            {
+                "DateTime;SensorName;CustomerName;Flags;SensorType;Unit;East;North;Height;km;VALUE1;VALUE2",
+                "invalid line",
+                "28.06.2022 15:30:31;TurbineMonitoring:DH_HS5_HS2_E2_comp;;;HydrostaticLevel;Hectopascal;0.0000;0.0000;0.0000;0.0000;0.0;15.0"
+            };
+            File.WriteAllLines("testData.csv", testData);
+
+            // Act
+            _parser.ParseAndStoreData("testData.csv");
+
+            // Assert
+            _mockRepository.Verify(repo => repo.InsertSensorData(It.Is<IEnumerable<SensorData>>(data => data.Count() == 1)), Times.Once());
+        }
+
+        [TestMethod] // РџСЂРѕРІРµСЂСЏРµС‚ Р±СЂРѕСЃР°РµС‚ Р»Рё РёСЃРєР»СЋС‡РµРЅРёРµ ParseAndStoreData, РµСЃР»Рё С„Р°Р№Р» РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚.
+        [ExpectedException(typeof(FileNotFoundException))]
+        public void ParseAndStoreData_ShouldThrowArgumentException_WhenFileDoesNotExist()
+        {
+            // Act & Assert
+            _parser.ParseAndStoreData("nonexistent.csv");
+        }
+
+        [TestMethod] // РџСЂРѕРІРµСЂСЏРµС‚ ParseAndStoreData РЅР° С‚Рѕ, РєР°Рє РѕРЅ РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ С„Р°Р№Р», СЃРѕРґРµСЂР¶Р°С‰РёР№ РєР°Рє РґРѕРїСѓСЃС‚РёРјС‹Рµ, С‚Р°Рє Рё РЅРµРґРѕРїСѓСЃС‚РёРјС‹Рµ СЃС‚СЂРѕРєРё.
+        public void ParseAndStoreData_ShouldHandleMixedValidAndInvalidData()
+        {
+            // Arrange
+            var testData = new List<string>
+            {
+                "DateTime;SensorName;CustomerName;Flags;SensorType;Unit;East;North;Height;km;VALUE1;VALUE2",
+                "28.06.2022 15:30:31;TurbineMonitoring:DH_HS5_HS2_E2_comp;;;HydrostaticLevel;Hectopascal;0.0000;0.0000;0.0000;0.0000;invalid;15.0",
+                "28.06.2022 15:30:41;TurbineMonitoring:DH_HS5_HS2_E2_comp;;;HydrostaticLevel;Hectopascal;0.0000;0.0000;0.0000;0.0000;0.013879726000002873;15.0",
+                "28.06.2022 15:30:51;TurbineMonitoring:DH_HS5_HS2_E2_comp;;;HydrostaticLevel;Hectopascal;0.0000;0.0000;0.0000;0.0000;0.02181099799998439;15.0"
+            };
+            File.WriteAllLines("testData.csv", testData);
+
+            // Act
+            _parser.ParseAndStoreData("testData.csv");
+
+            // Assert
+            _mockRepository.Verify(repo => repo.InsertSensorData(It.Is<IEnumerable<SensorData>>(data => data.Count() == 2)), Times.Once());
         }
 
         [TestCleanup]
         public void Cleanup()
         {
-            if (File.Exists("testData.txt"))
+            if (File.Exists("testData.csv"))
             {
-                File.Delete("testData.txt");
+                File.Delete("testData.csv");
             }
         }
     }

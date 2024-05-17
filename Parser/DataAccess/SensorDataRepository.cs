@@ -1,4 +1,4 @@
-﻿using MongoDB.Driver;
+using MongoDB.Driver;
 
 public class SensorDataRepository : ISensorDataRepository
 {
@@ -11,6 +11,19 @@ public class SensorDataRepository : ISensorDataRepository
 
     public void InsertSensorData(IEnumerable<SensorData> data)
     {
-        _collection.InsertMany(data);
+        try
+        {
+            if (data == null || !data.Any())
+            {
+                throw new ArgumentException("Must contain at least 1 request.", nameof(data));
+            }
+
+            _collection.InsertMany(data);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while inserting sensor data: {ex.Message}");
+            throw;
+        }
     }
 }

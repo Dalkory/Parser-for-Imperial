@@ -1,4 +1,5 @@
 using MongoDB.Driver;
+using MoreLinq;
 
 public class SensorDataRepository : ISensorDataRepository
 {
@@ -18,7 +19,12 @@ public class SensorDataRepository : ISensorDataRepository
                 throw new ArgumentException("Must contain at least 1 request.", nameof(data));
             }
 
-            _collection.InsertMany(data);
+            var batchSize = 1; 
+            var batches = data.Batch(batchSize);
+            foreach (var batch in batches)
+            {
+                _collection.InsertMany(batch);
+            }
         }
         catch (Exception ex)
         {

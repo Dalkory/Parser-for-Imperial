@@ -13,7 +13,7 @@ public class SensorDataParser
     {
         try
         {
-            var sensorData = ParseFile(filePath).ToList();
+            var sensorData = ParseFile(filePath);
             if (sensorData.Any())
             {
                 _repository.InsertSensorData(sensorData);

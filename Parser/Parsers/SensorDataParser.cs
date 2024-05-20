@@ -21,10 +21,16 @@ public class SensorDataParser
                 return;
             }
 
-            var sensorData = ParseFile(filePath);
-            if (sensorData.Any())
+            var sensorDataEnumerator = ParseFile(filePath).GetEnumerator();
+
+            bool hasData = sensorDataEnumerator.MoveNext();
+            if (hasData)
             {
-                _repository.InsertSensorData(sensorData);
+                do
+                {
+                    _repository.InsertSensorData(new[] { sensorDataEnumerator.Current });
+                } while (sensorDataEnumerator.MoveNext());
+
                 _fileParsed = true;
             }
         }
@@ -37,6 +43,11 @@ public class SensorDataParser
 
     private IEnumerable<SensorData> ParseFile(string filePath)
     {
+        if (_fileParsed)
+        {
+            yield break;
+        }
+
         using (var reader = new StreamReader(filePath))
         {
             string line;
@@ -56,6 +67,8 @@ public class SensorDataParser
                 }
             }
         }
+
+        _fileParsed = true;
     }
 
     private SensorData ParseLine(string line)

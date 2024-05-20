@@ -14,12 +14,12 @@ public class SensorDataRepository : ISensorDataRepository
     {
         try
         {
-            if (data == null || !data.Any())
+            if (data == null)
             {
-                throw new ArgumentException("Must contain at least 1 request.", nameof(data));
+                throw new ArgumentException("Data cannot be null.", nameof(data));
             }
 
-            var batchSize = 1; 
+            var batchSize = 1;
             var batches = data.Batch(batchSize);
             foreach (var batch in batches)
             {

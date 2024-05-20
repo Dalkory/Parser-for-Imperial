@@ -3,20 +3,29 @@ using System.Globalization;
 public class SensorDataParser
 {
     private readonly ISensorDataRepository _repository;
+    private bool _fileParsed;
 
     public SensorDataParser(ISensorDataRepository repository)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _fileParsed = false;
     }
 
     public void ParseAndStoreData(string filePath)
     {
         try
         {
+            if (_fileParsed)
+            {
+                Console.WriteLine("File already parsed.");
+                return;
+            }
+
             var sensorData = ParseFile(filePath);
             if (sensorData.Any())
             {
                 _repository.InsertSensorData(sensorData);
+                _fileParsed = true;
             }
         }
         catch (Exception ex)
